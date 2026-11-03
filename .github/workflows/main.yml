@@ -1,4 +1,3 @@
-name: build
 on: [push]
 jobs:
   Build:
@@ -17,11 +16,21 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y git zip unzip autoconf libtool pkg-config zlib1g-dev libncurses5-dev cmake libffi-dev libssl-dev
           pip install buildozer cython==0.29.33
-          yes | sdkmanager --licenses || true
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2" "build-tools;37.0.0" "platforms;android-33" "platforms;android-34" || true
+      - name: Fix API to 33
+        run: |
+          sed -i "s/^android.api.*/android.api = 33/" buildozer.spec
+          sed -i "s/^android.sdk.*/android.sdk = 33/" buildozer.spec || true
       - name: Build APK
-        run: buildozer android debug
+        run: |
+          rm -rf ~/.buildozer
+          mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
+          printf "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb78af6dfcb131a6481e\n24333f8a63b6825ea9c5514f83c1059b8ea4b324" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
+          printf "y" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
+          buildozer android debug || true
+          yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2" || true
+          cp -r ~/.buildozer/android/platform/android-sdk/build-tools/33.0.2 ~/.buildozer/android/platform/android-sdk/build-tools/37.0.0 || true
+          buildozer android debug
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
