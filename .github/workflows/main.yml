@@ -1,0 +1,44 @@
+name: Build APK
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libtinfo5 cmake libffi-dev libssl-dev libltdl-dev
+          pip install --upgrade pip
+          pip install buildozer cython==0.29.33
+      - name: Fix SDK - Install 37.0.0 and Accept Licenses
+        run: |
+          sudo mkdir -p /usr/local/lib/android/sdk/tools/bin
+          echo -e '#!/bin/bash\nexec /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager "$@"' | sudo tee /usr/local/lib/android/sdk/tools/bin/sdkmanager > /dev/null
+          echo -e '#!/bin/bash\nexec /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager "$@"' | sudo tee /usr/local/lib/android/sdk/tools/bin/android > /dev/null
+          sudo chmod +x /usr/local/lib/android/sdk/tools/bin/*
+          yes | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+          /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --install "build-tools;33.0.2" "build-tools;37.0.0" "platform-tools" "platforms;android-33" "ndk;25.1.8937393"
+          ls /usr/local/lib/android/sdk/build-tools/
+      - name: Build APK
+        run: |
+          SDK_DIR=$HOME/.buildozer/android/platform/android-sdk
+          mkdir -p $SDK_DIR/build-tools
+          mkdir -p $SDK_DIR/licenses
+          mkdir -p $SDK_DIR/platform-tools
+          cp -r /usr/local/lib/android/sdk/build-tools/* $SDK_DIR/build-tools/ || true
+          cp -r /usr/local/lib/android/sdk/licenses/* $SDK_DIR/licenses/ || true
+          cp -r /usr/local/lib/android/sdk/platform-tools/* $SDK_DIR/platform-tools/ || true
+          cp -r /usr/local/lib/android/sdk/platforms/* $SDK_DIR/platforms/ || true
+          chmod +x $SDK_DIR/build-tools/*/aidl || true
+          ls -lh $SDK_DIR/build-tools/37.0.0/aidl
+          buildozer android debug
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Anthobiz-APK
+          path: bin/*.apk
