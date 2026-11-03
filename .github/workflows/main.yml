@@ -18,31 +18,8 @@ jobs:
           sudo apt-get install -y git zip unzip autoconf libtool pkg-config zlib1g-dev libncurses5-dev cmake libffi-dev libssl-dev
           pip install buildozer cython==0.29.33
           pip install --upgrade git+https://github.com/kivy/python-for-android.git@develop
-      - name: Create perfect buildozer.spec and FAKE 37
+      - name: Build APK
         run: |
-          cat > buildozer.spec << 'EOF'
-          [app]
-          title = Anthobiz
-          package.name = anthobiz
-          package.domain = com.anthotech.anthobiz
-          source.dir = .
-          source.include_exts = py,png,jpg,kv,atlas,json
-          version = 0.1
-          requirements = python3,kivy
-          orientation = portrait
-          [buildozer]
-          log_level = 2
-          [app:android]
-          p4a.branch = develop
-          p4a.bootstrap = sdl2
-          android.api = 33
-          android.minapi = 21
-          android.sdk = 33
-          android.ndk = 25b
-          android.accept_sdk_license_agreements = True
-          android.permissions = INTERNET
-          EOF
-          cat buildozer.spec
           rm -rf ~/.buildozer
           mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
           printf "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb78af6dfcb131a6481e\n24333f8a63b6825ea9c5514f83c1059b8ea4b324" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
@@ -56,3 +33,4 @@ jobs:
         with:
           name: Anthobiz-APK
           path: bin/*.apk
+          
