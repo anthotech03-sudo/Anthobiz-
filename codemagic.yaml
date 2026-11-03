@@ -1,0 +1,25 @@
+workflows:
+  anthobiz-apk:
+    name: Anthobiz APK Build
+    max_build_duration: 60
+    instance_type: linux_x2
+    environment:
+      vars:
+        JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+      python: 3.10.11
+      java: 17
+    scripts:
+      - name: Install Buildozer deps
+        script: |
+          sudo apt-get update
+          sudo apt-get install -y git zip unzip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libffi-dev libssl-dev
+          pip3 install --upgrade pip
+          pip3 install buildozer cython==0.29.33
+          yes | sdkmanager --licenses || true
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2" "build-tools;37.0.0" "platforms;android-33" "platforms;android-34" || true
+      - name: Build APK
+        script: |
+          buildozer android debug
+    artifacts:
+      - bin/*.apk
