@@ -20,3 +20,4 @@ android.sdk = 33
 android.ndk = 25b
 android.accept_sdk_license_agreements = True
 android.build_tools_version = 33.0.2
+android.sdk_path = /usr/local/lib/android/sdk
